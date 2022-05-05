@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "780111340450",
+    "project_id": "apiandroid-345714",
+    "storage_bucket": "apiandroid-345714.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780111340450:android:d7a6b62e7238258bda88fb",
+        "android_client_info": {
+          "package_name": "com.palacios.terceraactividadjaveriana"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "780111340450-hc7bugocpnnmrnrd86h2ponj1c4nmjcr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAa464I_bB87iMBsY7goMFRqUzF4VIRniE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "780111340450-hc7bugocpnnmrnrd86h2ponj1c4nmjcr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
