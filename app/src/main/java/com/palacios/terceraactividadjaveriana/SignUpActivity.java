@@ -64,7 +64,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     //Database
     //Root path of every user in FB
-    public static final String PATH_USERS="users/";
+    public static final String PATH_USERS = "users/";
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private StorageReference mStorageRef;
@@ -90,12 +90,11 @@ public class SignUpActivity extends AppCompatActivity {
     private Button btnSaveSign;
 
 
-
     //Uri to store the camera picture
     Uri uriCamera;
     Uri fileToUpload;
-    double latitude=0;
-    double longitude=0;
+    double latitude = 0;
+    double longitude = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,7 +104,7 @@ public class SignUpActivity extends AppCompatActivity {
         //Firebase
         mAuth = FirebaseAuth.getInstance();
         //Database
-        database= FirebaseDatabase.getInstance();
+        database = FirebaseDatabase.getInstance();
         //Storage
         mStorageRef = FirebaseStorage.getInstance().getReference();
 
@@ -131,10 +130,7 @@ public class SignUpActivity extends AppCompatActivity {
         getSinglePermission.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         //Check if GPS is ON
         checkLocationSettings();
-
-
     }
-
 
     private void startButtons() {
         //Gallery
@@ -152,8 +148,6 @@ public class SignUpActivity extends AppCompatActivity {
             }
         });
         btnSaveSign.setOnClickListener(new View.OnClickListener() {
-
-
             @Override
             public void onClick(View view) {
                 String name = txtNameSign.getText().toString().toLowerCase().trim();
@@ -165,43 +159,38 @@ public class SignUpActivity extends AppCompatActivity {
 
                 boolean isAvailable = false;
 
-                if(validateSignUp(name, last, id, email, password, confirmPassword)==true){
-                    tryToSignUp(name, last, id, email,password);
-
+                if (validateSignUp(name, last, id, email, password, confirmPassword) == true) {
+                    tryToSignUp(name, last, id, email, password);
                 }
             }
         });
     }
 
     private void tryToSignUp(String name, String last, String id, String email, String password) {
-
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        if(task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             Log.d("SIGN UP", "createUserWithEmail:onComplete:" + task.isSuccessful());
                             FirebaseUser user = mAuth.getCurrentUser();
                             //Save picture on user Storage
                             uploadFile(user);
                             //Create user
-                            String imageUrl = "images/profile/"+user.getUid()+"/image.jpg";
+                            String imageUrl = "images/profile/" + user.getUid() + "/image.jpg";
 
                             //Save user in FB
-                            User newUser = new User(name,last,id,email,password,latitude,longitude,imageUrl,false);
-                            myRef=database.getReference(PATH_USERS+user.getUid());
+                            User newUser = new User(name, last, id, email, password, latitude, longitude, imageUrl, false);
+                            myRef = database.getReference(PATH_USERS + user.getUid());
                             myRef.setValue(newUser);
-
+                            //Start maps activity
                             updateUi(user);
-
-
-
-                            if(user!=null){ //Update user Info
+                            if (user != null) { //Update user Info
                                 UserProfileChangeRequest.Builder upcrb = new UserProfileChangeRequest.Builder();
-                                upcrb.setDisplayName(txtNameSign.getText().toString()+" "+txtLastSign.getText().toString());
+                                upcrb.setDisplayName(txtNameSign.getText().toString() + " " + txtLastSign.getText().toString());
                                 upcrb.setPhotoUri(Uri.parse(imageUrl));//fake uri, use Firebase Storage
                                 user.updateProfile(upcrb.build());
-                                //updateUI(user);
+                                updateUi(user);
                             }
                         }
                         if (!task.isSuccessful()) {
@@ -215,19 +204,18 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void updateUi(FirebaseUser user) {
         Intent intent = new Intent(this, MapsActivity.class);
-        intent.putExtra("user", user.getEmail());
+        intent.putExtra("user", user.getUid());
         startActivity(intent);
     }
 
-    private void uploadFile(FirebaseUser user)
-    {
-        if(fileToUpload!=null){
-            StorageReference imageRef = mStorageRef.child("images/profile/"+user.getUid()+"/image.jpg");
+    private void uploadFile(FirebaseUser user) {
+        if (fileToUpload != null) {
+            StorageReference imageRef = mStorageRef.child("images/profile/" + user.getUid() + "/image.jpg");
             imageRef.putFile(fileToUpload)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        // Get a URL to the uploaded content
+                            // Get a URL to the uploaded content
                             Log.i("UPLOAD", "Succesfully upload image");
 
                         }
@@ -235,8 +223,8 @@ public class SignUpActivity extends AppCompatActivity {
                     .addOnFailureListener(new OnFailureListener() {
                         @Override
                         public void onFailure(@NonNull Exception exception) {
-                        // Handle unsuccessful uploads
-                        // ...
+                            // Handle unsuccessful uploads
+                            // ...
                             Log.e("UPLOAD", "Failed to upload image");
                         }
                     });
@@ -244,37 +232,36 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
 
-
     private boolean validateSignUp(String name, String last, String id, String email, String password, String confirmPassword) {
-        if(name.isEmpty()) {
+        if (name.isEmpty()) {
             txtNameSign.setError("Name is required");
             return false;
         }
-        if(last.isEmpty()) {
+        if (last.isEmpty()) {
             txtLastSign.setError("Last name is required");
             return false;
         }
-        if(id.isEmpty()) {
+        if (id.isEmpty()) {
             txtIdSign.setError("Id is required");
             return false;
         }
-        if(email.isEmpty()) {
+        if (email.isEmpty()) {
             txtEmailSign.setError("Email is required");
             return false;
         }
-        if(password.isEmpty()) {
+        if (password.isEmpty()) {
             txtPasswordSign.setError("Password is required");
             return false;
         }
-        if(confirmPassword.isEmpty()) {
+        if (confirmPassword.isEmpty()) {
             txtConfirmPasswordSign.setError("Confirm password is required");
             return false;
         }
-        if(!password.equals(confirmPassword)) {
+        if (!password.equals(confirmPassword)) {
             txtConfirmPasswordSign.setError("Passwords must be equal");
             return false;
         }
-        if(EmailPasswordVerifier.verifyEmailAndPassword(email, password)==false){
+        if (EmailPasswordVerifier.verifyEmailAndPassword(email, password) == false) {
             txtEmailSign.setError("Email or password is not valid");
             txtPasswordSign.setError("Email or password is not valid");
             return false;
@@ -380,13 +367,12 @@ public class SignUpActivity extends AppCompatActivity {
 
     //---------------------------------------------------------------CAMERA AND FILES---------------------------------------------------
     //Starts camera and the photo taken is saved on uriCamera
-    private void startCamera(){
+    private void startCamera() {
         File file = new File(getFilesDir(), "picFromCamera");
         uriCamera = FileProvider.getUriForFile(this,
                 getApplicationContext().getPackageName() + ".fileprovider", file);
         mGetContentCamera.launch(uriCamera);
     }
-
 
     //Open gallery and get its uri
     ActivityResultLauncher<String> mGetContentGallery = registerForActivityResult(
@@ -396,7 +382,7 @@ public class SignUpActivity extends AppCompatActivity {
                 public void onActivityResult(Uri uriLocal) {
                     //Load image on a view…
                     setImage(uriLocal);
-                    fileToUpload=uriLocal;
+                    fileToUpload = uriLocal;
                 }
             });
 
@@ -407,7 +393,7 @@ public class SignUpActivity extends AppCompatActivity {
                         public void onActivityResult(Boolean result) {
                             //Load image on a view
                             setImage(uriCamera);
-                            fileToUpload=uriCamera;
+                            fileToUpload = uriCamera;
                         }
                     });
 
@@ -424,7 +410,6 @@ public class SignUpActivity extends AppCompatActivity {
     }
 
 
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -438,8 +423,6 @@ public class SignUpActivity extends AppCompatActivity {
         super.onResume();
         //LOCATION
         startLocationUpdates();
-
-
     }
 
 }

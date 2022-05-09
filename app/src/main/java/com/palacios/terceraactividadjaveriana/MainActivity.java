@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
     private void updateUI(FirebaseUser currentUser) {
         if (currentUser != null) {
             Intent intent = new Intent(getBaseContext(), MapsActivity.class);
-            intent.putExtra("user", currentUser.getEmail());
+            intent.putExtra("user", currentUser.getUid());
             startActivity(intent);
         } else {
             txtEmail.setText("");

@@ -66,20 +66,20 @@ public class User {
         this.password = password;
     }
 
-    public double getLatitud() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public void setLatitud(double latitud) {
-        this.latitude = latitud;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
     }
 
-    public double getLongitud() {
+    public double getLongitude() {
         return longitude;
     }
 
-    public void setLongitud(double longitud) {
-        this.longitude = longitud;
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
     }
 
     public String getImageUrl() {
