@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         if (currentUser != null) {
             Intent intent = new Intent(getBaseContext(), MapsActivity.class);
             intent.putExtra("user", currentUser.getEmail());
-            //startActivity(intent);
+            startActivity(intent);
         } else {
             txtEmail.setText("");
             txtPassword.setText("");
