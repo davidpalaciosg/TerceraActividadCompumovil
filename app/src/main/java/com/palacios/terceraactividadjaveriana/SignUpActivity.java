@@ -16,6 +16,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,6 +26,14 @@ import java.io.InputStream;
 public class SignUpActivity extends AppCompatActivity {
     //Firebase
     private FirebaseAuth mAuth;
+
+    //Database
+    //Root path of every user in FB
+    public static final String PATH_USERS="users/";
+    FirebaseDatabase database;
+    DatabaseReference myRef;
+
+    //Views
     private EditText txtNameSign;
     private EditText txtLastSign;
     private EditText txtIdSign;
@@ -35,6 +45,8 @@ public class SignUpActivity extends AppCompatActivity {
     private Button btnFilesSign;
     private Button btnSaveSign;
 
+
+
     //Uri to store the camera picture
     Uri uriCamera;
 
@@ -43,7 +55,11 @@ public class SignUpActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
 
+        //Firebase
         mAuth = FirebaseAuth.getInstance();
+        //Database
+        database= FirebaseDatabase.getInstance();
+
         //Inflate
         txtNameSign = findViewById(R.id.txtNameSign);
         txtLastSign = findViewById(R.id.txtLastSign);
