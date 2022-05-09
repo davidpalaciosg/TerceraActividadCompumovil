@@ -13,6 +13,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -34,6 +36,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -42,10 +45,19 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
+import com.palacios.terceraactividadjaveriana.Classes.JsonToString;
+import com.palacios.terceraactividadjaveriana.Classes.User;
 import com.palacios.terceraactividadjaveriana.databinding.ActivityMapsBinding;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +71,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker markerLastLocation;
     //Buttons
     private FloatingActionButton btnLogout;
+    private FloatingActionButton btnAvailable;
 
     //Firebase
     private FirebaseAuth mAuth;
@@ -79,10 +92,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private double previousLat = 0;
     private double previousLong = 0;
 
-    boolean firstTime = false;
     private boolean settingsOK = false;
     private double currentLat = 0;
     private double currentLong = 0;
+
+    private boolean isAvailable = false;
+
+
 
 
     @Override
@@ -97,6 +113,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         //Inflate
         btnLogout = findViewById(R.id.btnLogout);
+        btnAvailable = findViewById(R.id.btnAvailable);
 
         startButtons();
 
@@ -133,6 +150,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
         });
+        btnAvailable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                updateAvailability();
+
+            }
+        });
+    }
+
+    private void updateAvailability() {
+        if (User.isAvailableGlobal) {
+            User.isAvailableGlobal = false;
+            Toast.makeText(this, "Disconected", Toast.LENGTH_SHORT).show();
+            btnAvailable.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
+        }
+        else {
+            User.isAvailableGlobal = true;
+            Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
+            btnAvailable.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
+
+        }
+        Map<String, Object> newAvailable = new HashMap<>();
+        newAvailable.put("isAvailable", User.isAvailableGlobal);
+        myRef=database.getReference(PATH_USERS + "/"+uuId);
+        myRef.updateChildren(newAvailable);
+
     }
 
     //--------------------------------------------------------LOCATION---------------------------------------------------
@@ -313,6 +356,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(CameraUpdateFactory.newLatLng(PUJ));
 
         }
+
+        //Add locations.json markers
+        try{
+            addJsonMarkers();
+        }
+        catch (Exception e) {
+            Log.i("JSON", "Error adding json markers");
+        }
+
+    }
+
+    private void addJsonMarkers() throws JSONException {
+        JSONObject json = new JSONObject(JsonToString.loadJSONFromAsset("locations.json",this));
+        JSONArray locationsJsonArray = json.getJSONArray("locationsArray");
+        for (int i = 0; i < locationsJsonArray.length(); i++) {
+            //Get Info from each Country
+            JSONObject jsonObject = locationsJsonArray.getJSONObject(i);
+
+            double latitude = jsonObject.getDouble("latitude");
+            double longitude = jsonObject.getDouble("longitude");
+            String name = jsonObject.getString("name");
+
+            LatLng newJsonLocation = new LatLng(latitude, longitude);
+            mMap.addMarker(new MarkerOptions().position(newJsonLocation).title(name));
+        }
+
     }
 
     public void updateMapWithLocation() {
@@ -320,11 +389,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             markerLastLocation.remove();
         }
         LatLng location = new LatLng(currentLat, currentLong);
-        markerLastLocation = mMap.addMarker(new MarkerOptions().position(location).title("Your location"));
-        mMap.getUiSettings().setZoomGesturesEnabled(true);
-        mMap.getUiSettings().setZoomControlsEnabled(true);
+        markerLastLocation = mMap.addMarker(new MarkerOptions()
+                .position(location)
+                .title("Your location")
+                .icon(BitmapDescriptorFactory
+                        .defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                ));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
         mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
+        mMap.getUiSettings().setZoomGesturesEnabled(true);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+
 
     }
 

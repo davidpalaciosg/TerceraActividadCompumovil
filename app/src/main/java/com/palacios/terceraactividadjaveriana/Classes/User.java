@@ -1,6 +1,8 @@
 package com.palacios.terceraactividadjaveriana.Classes;
 
 public class User {
+
+    public static boolean isAvailableGlobal=false;
     private String name;
     private String lastName;
     private String id;

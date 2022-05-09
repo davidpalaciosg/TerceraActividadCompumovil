@@ -11,10 +11,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start|top"
-        android:backgroundTint="@color/white"
+        android:backgroundTint="@color/red"
+
         android:src="@drawable/ic_baseline_exit_to_app_24"
         android:contentDescription="LogOut"
         android:layout_margin="16dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnAvailable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top"
+        android:layout_margin="16dp"
+
+        android:backgroundTint="@color/yellow"
+        android:contentDescription="LogOut"
+        android:src="@drawable/ic_baseline_supervised_user_circle_24"
+        />
 
     <fragment
         android:id="@+id/map"
