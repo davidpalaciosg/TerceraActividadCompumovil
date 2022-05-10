@@ -72,6 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     //Buttons
     private FloatingActionButton btnLogout;
     private FloatingActionButton btnAvailable;
+    private FloatingActionButton btnUsers;
 
     //Firebase
     private FirebaseAuth mAuth;
@@ -96,10 +97,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private double currentLat = 0;
     private double currentLong = 0;
 
-    private boolean isAvailable = false;
-
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,6 +111,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Inflate
         btnLogout = findViewById(R.id.btnLogout);
         btnAvailable = findViewById(R.id.btnAvailable);
+        btnUsers = findViewById(R.id.btnUsers);
 
         startButtons();
 
@@ -155,6 +153,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onClick(View view) {
                 updateAvailability();
 
+            }
+        });
+        btnUsers.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(view.getContext(), OnlineUsersActivity.class);
+                intent.putExtra("user", uuId);
+                startActivity(intent);
             }
         });
     }

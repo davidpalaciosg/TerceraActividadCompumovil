@@ -26,8 +26,19 @@
 
         android:backgroundTint="@color/yellow"
         android:contentDescription="LogOut"
-        android:src="@drawable/ic_baseline_supervised_user_circle_24"
+        android:src="@drawable/ic_baseline_online_prediction_24"
         />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnUsers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|top"
+        android:layout_margin="16dp"
+
+        android:backgroundTint="@color/green"
+        android:contentDescription="LogOut"
+        android:src="@drawable/ic_baseline_supervised_user_circle_24" />
 
     <fragment
         android:id="@+id/map"

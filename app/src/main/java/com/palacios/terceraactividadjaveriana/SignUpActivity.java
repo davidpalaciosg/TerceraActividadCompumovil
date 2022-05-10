@@ -180,7 +180,7 @@ public class SignUpActivity extends AppCompatActivity {
                             String imageUrl = "images/profile/" + user.getUid() + "/image.jpg";
 
                             //Save user in FB
-                            User newUser = new User(name, last, id, email, password, latitude, longitude, imageUrl, false);
+                            User newUser = new User(name, last, id, email, password, latitude, longitude, imageUrl, false, user.getUid());
                             myRef = database.getReference(PATH_USERS + user.getUid());
                             myRef.setValue(newUser);
                             //Start maps activity

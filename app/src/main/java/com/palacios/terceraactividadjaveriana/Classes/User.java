@@ -13,10 +13,12 @@ public class User {
     private String imageUrl;
     private boolean isAvailable;
 
+    private String uuid;
+
     public User() {
     }
 
-    public User(String name, String lastName, String id, String email, String password, double latitude, double longitude, String imageUrl, boolean isAvailable) {
+    public User(String name, String lastName, String id, String email, String password, double latitude, double longitude, String imageUrl, boolean isAvailable, String uuid) {
         this.name = name;
         this.lastName = lastName;
         this.id = id;
@@ -26,6 +28,7 @@ public class User {
         this.longitude = longitude;
         this.imageUrl = imageUrl;
         this.isAvailable = isAvailable;
+        this.uuid = uuid;
     }
 
     public String getName() {
@@ -90,5 +93,21 @@ public class User {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public boolean getIsAvailable() {
+        return this.isAvailable;
+    }
+
+    public void setIsAvailable(boolean available) {
+        this.isAvailable = available;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }
