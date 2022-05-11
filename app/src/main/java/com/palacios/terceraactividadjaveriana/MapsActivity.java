@@ -19,6 +19,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -71,6 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FloatingActionButton btnAvailable;
     private FloatingActionButton btnUsers;
     private FloatingActionButton btnDavidPalacios;
+    private TextView status;
 
     //Firebase
     private FirebaseAuth mAuth;
@@ -81,6 +83,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private DatabaseReference myRef;
     private StorageReference mStorageRef;
     private  String uuId;
+    private String email;
 
     //locationRequest with google
     private FusedLocationProviderClient mFusedLocationClient;
@@ -104,6 +107,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         Intent intent = getIntent();
         uuId = intent.getStringExtra("user");
+        email = intent.getStringExtra("email");
 
 
         //Inflate
@@ -111,8 +115,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         btnAvailable = findViewById(R.id.btnAvailable);
         btnUsers = findViewById(R.id.btnUsers);
         btnDavidPalacios = findViewById(R.id.btnDavidPalacios);
+        status = findViewById(R.id.status);
+        status.setText("User: " + email);
 
         startButtons();
+
 
         //Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -173,21 +180,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void updateAvailability() {
+        String txt= "User: "+email;
         if (User.isAvailableGlobal) {
             User.isAvailableGlobal = false;
             Toast.makeText(this, "Disconected", Toast.LENGTH_SHORT).show();
             btnAvailable.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
+            txt = txt + " is now unavailable";
         }
         else {
             User.isAvailableGlobal = true;
             Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
             btnAvailable.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
-
+            txt = txt + " is now available";
         }
         Map<String, Object> newAvailable = new HashMap<>();
         newAvailable.put("isAvailable", User.isAvailableGlobal);
         myRef=database.getReference(PATH_USERS + "/"+uuId);
         myRef.updateChildren(newAvailable);
+        status.setText(txt);
 
     }
 

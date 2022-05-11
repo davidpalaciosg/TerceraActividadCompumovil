@@ -74,17 +74,19 @@ public class OnlineUsersActivity extends AppCompatActivity {
     }
 
 
-    private ArrayList<User> getOnlineUsers() {
-        ArrayList<User> onlineUsers;
-        onlineUsers = new ArrayList<>();
+    private void getOnlineUsers() {
+
         myRef = database.getReference(PATH_USERS);
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                ArrayList<User> onlineUsers;
+                onlineUsers = new ArrayList<>();
                 Bitmap image = null;
                 for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
                     User user = singleSnapshot.getValue(User.class);
-                    if (user.getIsAvailable()) {
+                    //if the user is online and is not the user that is logged in
+                    if (user.getIsAvailable() && user.getUuid() != uuId) {
                         onlineUsers.add(user);
                         users.add(user);
                     }
@@ -100,10 +102,11 @@ public class OnlineUsersActivity extends AppCompatActivity {
             }
         });
 
-        return onlineUsers;
+        //return onlineUsers;
     }
 
     private void updateList(ArrayList<User> onlineUsers) {
+        listOnlineUsers.getEmptyView();
         adapter = new OnlineUsersAdapter(OnlineUsersActivity.this, R.layout.onlineuseritem, onlineUsers);
         listOnlineUsers.setAdapter(adapter);
         startListenerListOnlineUsers();
