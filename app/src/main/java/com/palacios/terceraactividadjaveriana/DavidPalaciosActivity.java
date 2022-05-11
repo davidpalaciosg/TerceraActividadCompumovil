@@ -16,6 +16,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -56,12 +57,13 @@ import java.util.Map;
 public class DavidPalaciosActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private static final String DavidPalaciosUUID = "DVduIWbHi0TLxUd83U65ph0L3PE3";
-    public static final double RADIUS_OF_EARTH_M = 6371000;
+    public static final double RADIUS_OF_EARTH_KM = 6371;
 
     private GoogleMap mMap;
     private ActivityDavidPalaciosBinding binding;
     private Marker markerLastLocation;
     private Marker markerDavidPalacios;
+    private TextView txtDistance;
 
     //Firebase
     private FirebaseAuth mAuth;
@@ -71,7 +73,6 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private DatabaseReference davidRef;
-    private StorageReference mStorageRef;
     private String uuId;
 
     //locationRequest with google
@@ -82,6 +83,9 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
     private boolean firstMovement;
     private double previousLat = 0;
     private double previousLong = 0;
+
+    private double davidLat= 0;
+    private double davidLong = 0;
 
     private boolean settingsOK = false;
     private double currentLat = 0;
@@ -95,6 +99,8 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
 
         Intent intent = getIntent();
         uuId = intent.getStringExtra("user");
+        txtDistance=  findViewById(R.id.txtDistance);
+        txtDistance.setText("");
 
         //Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -113,10 +119,38 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
 
         //MAP
         startMap();
+        getUniqueDavidLocation();
         getDavidLocationUpdates();
 
     }
 
+    //Read David's location from FB ONCE FIRST TIME
+    private void getUniqueDavidLocation(){
+        davidRef = database.getReference(PATH_USERS);
+        davidRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
+                    User david = singleSnapshot.getValue(User.class);
+                    if (david.getUuid().equals(DavidPalaciosUUID)) {
+                        String name = david.getName();
+                        davidLat = david.getLatitude();
+                        davidLong = david.getLongitude();
+                        Log.i("DAVID", "Location: " + davidLat + " " + davidLong);
+                        updateDavidLocation();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.w("DAVID", "error en la consulta", databaseError.toException());
+            }
+        });
+
+    }
+
+    //Read David's location from FB EVERYTIME
     private void getDavidLocationUpdates() {
         davidRef = database.getReference(PATH_USERS);
         davidRef.addValueEventListener(new ValueEventListener() {
@@ -127,12 +161,11 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
 
                     if (david.getUuid().equals(DavidPalaciosUUID)) {
                         String name = david.getName();
-                        double davidLat = david.getLatitude();
-                        double davidLong = david.getLongitude();
+                        davidLat = david.getLatitude();
+                        davidLong = david.getLongitude();
                         Log.i("DAVID", "Location: " + davidLat + " " + davidLong);
+                        updateDavidLocation();
 
-                        Toast.makeText(getBaseContext(), "Location: " + davidLat + " " + davidLong, Toast.LENGTH_SHORT).show();
-                        updateDavidLocation(davidLat, davidLong);
                     }
                 }
             }
@@ -142,6 +175,35 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
                 Log.w("DAVID", "error en la consulta", databaseError.toException());
             }
         });
+    }
+    public void updateDavidLocation() {
+
+        if(markerDavidPalacios != null) {
+            markerDavidPalacios.remove();
+        }
+        if(davidLat!= 0 && davidLong != 0) {
+            //Create a marker for David Palacios
+            LatLng location = new LatLng(davidLat, davidLong);
+            markerDavidPalacios = mMap.addMarker(new MarkerOptions()
+                    .position(location)
+                    .title("David Palacios Location")
+                    .icon(BitmapDescriptorFactory
+                            .defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
+                    ));
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
+            mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
+
+            //Calculate distance between David Palacios and current location
+            txtDistance.setText("");
+            double distance=0;
+            distance = distance(currentLat, currentLong, davidLat, davidLong);
+            String txt = "The distance between you is: "+distance+" kilometers";
+            txtDistance.setText(txt);
+        }
+        else
+            txtDistance.setText("The distance has not been calculated yet");
+
+
     }
 
     //--------------------------------------------------------LOCATION---------------------------------------------------
@@ -285,7 +347,7 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
                 * Math.sin(lngDistance / 2) * Math.sin(lngDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        double result = RADIUS_OF_EARTH_M * c;
+        double result = RADIUS_OF_EARTH_KM * c;
         return Math.round(result * 100.0) / 100.0;
     }
 
@@ -332,20 +394,7 @@ public class DavidPalaciosActivity extends FragmentActivity implements OnMapRead
         mMap.getUiSettings().setZoomControlsEnabled(true);
     }
 
-    public void updateDavidLocation(double latitude, double longitude) {
-        if(markerDavidPalacios != null) {
-            markerDavidPalacios.remove();
-        }
-        LatLng location = new LatLng(latitude, longitude);
-        markerDavidPalacios = mMap.addMarker(new MarkerOptions()
-                .position(location)
-                .title("David Palacios Location")
-                .icon(BitmapDescriptorFactory
-                        .defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
-                ));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
-    }
+
 
 
     @Override
