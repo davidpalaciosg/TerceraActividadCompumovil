@@ -13,12 +13,9 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
@@ -43,34 +40,28 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.StorageReference;
-import com.palacios.terceraactividadjaveriana.Classes.JsonToString;
 import com.palacios.terceraactividadjaveriana.Classes.User;
-import com.palacios.terceraactividadjaveriana.databinding.ActivityMapsBinding;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.palacios.terceraactividadjaveriana.databinding.ActivityDavidPalaciosBinding;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class DavidPalaciosActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private static final String DavidPalaciosUUID = "DVduIWbHi0TLxUd83U65ph0L3PE3";
     public static final double RADIUS_OF_EARTH_M = 6371000;
 
     private GoogleMap mMap;
-    private ActivityMapsBinding binding;
+    private ActivityDavidPalaciosBinding binding;
     private Marker markerLastLocation;
-    //Buttons
-    private FloatingActionButton btnLogout;
-    private FloatingActionButton btnAvailable;
-    private FloatingActionButton btnUsers;
-    private FloatingActionButton btnDavidPalacios;
+    private Marker markerDavidPalacios;
 
     //Firebase
     private FirebaseAuth mAuth;
@@ -79,8 +70,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public static final String PATH_USERS = "users/";
     private FirebaseDatabase database;
     private DatabaseReference myRef;
+    private DatabaseReference davidRef;
     private StorageReference mStorageRef;
-    private  String uuId;
+    private String uuId;
 
     //locationRequest with google
     private FusedLocationProviderClient mFusedLocationClient;
@@ -95,24 +87,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private double currentLat = 0;
     private double currentLong = 0;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMapsBinding.inflate(getLayoutInflater());
+        binding = ActivityDavidPalaciosBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         Intent intent = getIntent();
         uuId = intent.getStringExtra("user");
-
-
-        //Inflate
-        btnLogout = findViewById(R.id.btnLogout);
-        btnAvailable = findViewById(R.id.btnAvailable);
-        btnUsers = findViewById(R.id.btnUsers);
-        btnDavidPalacios = findViewById(R.id.btnDavidPalacios);
-
-        startButtons();
 
         //Firebase
         mAuth = FirebaseAuth.getInstance();
@@ -129,66 +111,37 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //Check if GPS is ON
         checkLocationSettings();
 
-
         //MAP
         startMap();
+        getDavidLocationUpdates();
 
     }
 
-
-    private void startButtons() {
-        btnLogout.setOnClickListener(new View.OnClickListener() {
+    private void getDavidLocationUpdates() {
+        davidRef = database.getReference(PATH_USERS);
+        davidRef.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onClick(View view) {
-                mAuth.signOut();
-                Intent intent = new Intent(view.getContext(), MainActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
+                    User david = singleSnapshot.getValue(User.class);
 
+                    if (david.getUuid().equals(DavidPalaciosUUID)) {
+                        String name = david.getName();
+                        double davidLat = david.getLatitude();
+                        double davidLong = david.getLongitude();
+                        Log.i("DAVID", "Location: " + davidLat + " " + davidLong);
+
+                        Toast.makeText(getBaseContext(), "Location: " + davidLat + " " + davidLong, Toast.LENGTH_SHORT).show();
+                        updateDavidLocation(davidLat, davidLong);
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.w("DAVID", "error en la consulta", databaseError.toException());
             }
         });
-        btnAvailable.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                updateAvailability();
-
-            }
-        });
-        btnUsers.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(view.getContext(), OnlineUsersActivity.class);
-                intent.putExtra("user", uuId);
-                startActivity(intent);
-            }
-        });
-        btnDavidPalacios.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(view.getContext(), DavidPalaciosActivity.class);
-                intent.putExtra("user", uuId);
-                startActivity(intent);
-            }
-        });
-    }
-
-    private void updateAvailability() {
-        if (User.isAvailableGlobal) {
-            User.isAvailableGlobal = false;
-            Toast.makeText(this, "Disconected", Toast.LENGTH_SHORT).show();
-            btnAvailable.setBackgroundTintList(ColorStateList.valueOf(Color.RED));
-        }
-        else {
-            User.isAvailableGlobal = true;
-            Toast.makeText(this, "Connected", Toast.LENGTH_SHORT).show();
-            btnAvailable.setBackgroundTintList(ColorStateList.valueOf(Color.GREEN));
-
-        }
-        Map<String, Object> newAvailable = new HashMap<>();
-        newAvailable.put("isAvailable", User.isAvailableGlobal);
-        myRef=database.getReference(PATH_USERS + "/"+uuId);
-        myRef.updateChildren(newAvailable);
-
     }
 
     //--------------------------------------------------------LOCATION---------------------------------------------------
@@ -201,7 +154,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (result == true) { //granted
                         startLocationUpdates();
                     } else {//denied
-                        Toast.makeText(MapsActivity.this, "Location permission is required", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(DavidPalaciosActivity.this, "Location permission is required", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -222,6 +175,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             }
     );
+
 
     private void checkLocationSettings() {
         LocationSettingsRequest.Builder builder = new
@@ -265,6 +219,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return request;
     }
 
+
     private LocationCallback createLocationCallBack() {
         return new LocationCallback() {
             @Override
@@ -286,18 +241,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     currentLat = lastLocation.getLatitude();
 
                     //If theres a movement, update map with the current location
-                    if (currentLong != previousLong && currentLat != previousLat)
-                    {
+                    if (currentLong != previousLong && currentLat != previousLat) {
                         updateMapWithLocation();
                         //Update database
                         Map<String, Object> newLocation = new HashMap<>();
                         newLocation.put("latitude", currentLat);
                         newLocation.put("longitude", currentLong);
 
-                        myRef=database.getReference(PATH_USERS + "/"+uuId);
+                        myRef = database.getReference(PATH_USERS + "/" + uuId);
                         myRef.updateChildren(newLocation);
-
-
                     }
 
 
@@ -318,6 +270,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         };
     }
 
+
     public boolean is10MetersForward(double lat1, double long1, double lat2, double long2) {
         double dist = distance(lat1, long1, lat2, long2);
         if (dist > 10)
@@ -336,22 +289,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return Math.round(result * 100.0) / 100.0;
     }
 
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+
     private void startMap() {
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.mapDavidP);
         mapFragment.getMapAsync(this);
     }
-
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -369,32 +313,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             mMap.moveCamera(CameraUpdateFactory.newLatLng(PUJ));
 
         }
-
-        //Add locations.json markers
-        try{
-            addJsonMarkers();
-        }
-        catch (Exception e) {
-            Log.i("JSON", "Error adding json markers");
-        }
-
-    }
-
-    private void addJsonMarkers() throws JSONException {
-        JSONObject json = new JSONObject(JsonToString.loadJSONFromAsset("locations.json",this));
-        JSONArray locationsJsonArray = json.getJSONArray("locationsArray");
-        for (int i = 0; i < locationsJsonArray.length(); i++) {
-            //Get Info from each Country
-            JSONObject jsonObject = locationsJsonArray.getJSONObject(i);
-
-            double latitude = jsonObject.getDouble("latitude");
-            double longitude = jsonObject.getDouble("longitude");
-            String name = jsonObject.getString("name");
-
-            LatLng newJsonLocation = new LatLng(latitude, longitude);
-            mMap.addMarker(new MarkerOptions().position(newJsonLocation).title(name));
-        }
-
     }
 
     public void updateMapWithLocation() {
@@ -412,9 +330,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
         mMap.getUiSettings().setZoomGesturesEnabled(true);
         mMap.getUiSettings().setZoomControlsEnabled(true);
-
-
     }
+
+    public void updateDavidLocation(double latitude, double longitude) {
+        if(markerDavidPalacios != null) {
+            markerDavidPalacios.remove();
+        }
+        LatLng location = new LatLng(latitude, longitude);
+        markerDavidPalacios = mMap.addMarker(new MarkerOptions()
+                .position(location)
+                .title("David Palacios Location")
+                .icon(BitmapDescriptorFactory
+                        .defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
+                ));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(location));
+        mMap.moveCamera(CameraUpdateFactory.zoomTo(15));
+    }
+
 
     @Override
     protected void onPause() {
@@ -430,5 +362,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         //LOCATION
         startLocationUpdates();
     }
-
 }

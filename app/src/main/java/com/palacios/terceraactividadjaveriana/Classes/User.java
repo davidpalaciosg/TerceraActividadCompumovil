@@ -1,5 +1,7 @@
 package com.palacios.terceraactividadjaveriana.Classes;
 
+import android.graphics.Bitmap;
+
 public class User {
 
     public static boolean isAvailableGlobal=false;
@@ -12,6 +14,8 @@ public class User {
     private double longitude;
     private String imageUrl;
     private boolean isAvailable;
+
+    Bitmap userImage;
 
     private String uuid;
 
@@ -29,6 +33,7 @@ public class User {
         this.imageUrl = imageUrl;
         this.isAvailable = isAvailable;
         this.uuid = uuid;
+        this.userImage = null;
     }
 
     public String getName() {
@@ -109,5 +114,13 @@ public class User {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public Bitmap getUserImage() {
+        return userImage;
+    }
+
+    public void setUserImage(Bitmap userImage) {
+        this.userImage = userImage;
     }
 }

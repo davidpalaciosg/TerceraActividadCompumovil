@@ -8,6 +8,7 @@
         android:id="@+id/imgOnlineUser"
         android:layout_width="80dp"
         android:layout_height="80dp"
+        android:layout_marginBottom="10dp"
         android:layout_weight="0.1"
         android:scaleType="fitCenter"
         app:srcCompat="@drawable/avatar1" />

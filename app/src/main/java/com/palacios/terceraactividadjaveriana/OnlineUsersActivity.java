@@ -8,6 +8,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -21,6 +25,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.palacios.terceraactividadjaveriana.Classes.OnlineUsersAdapter;
 import com.palacios.terceraactividadjaveriana.Classes.User;
 
 import java.io.File;
@@ -37,7 +42,14 @@ public class OnlineUsersActivity extends AppCompatActivity {
     private FirebaseDatabase database;
     private DatabaseReference myRef;
     private StorageReference mStorageRef;
-    private  String uuId;
+    private String uuId;
+
+    //List of users
+
+    public static ArrayList<User> users = new ArrayList<>();
+    private OnlineUsersAdapter adapter;
+    private ListView listOnlineUsers;
+    private Button locationOnlineUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,41 +59,41 @@ public class OnlineUsersActivity extends AppCompatActivity {
         Intent intent = getIntent();
         uuId = intent.getStringExtra("user");
 
+        //Inflate
+        listOnlineUsers = findViewById(R.id.listOnlineUsers);
+        locationOnlineUser = findViewById(R.id.locationOnlineUser);
+        //startButtonLocation();
+
         //Firebase
         mAuth = FirebaseAuth.getInstance();
         //Database
         database = FirebaseDatabase.getInstance();
         //Storage
         mStorageRef = FirebaseStorage.getInstance().getReference();
-       getOnlineUsers();
-
+        getOnlineUsers();
     }
 
 
     private ArrayList<User> getOnlineUsers() {
-        ArrayList<User> onlineUsers = new ArrayList<>();
+        ArrayList<User> onlineUsers;
+        onlineUsers = new ArrayList<>();
         myRef = database.getReference(PATH_USERS);
-        myRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                Bitmap image = null;
                 for (DataSnapshot singleSnapshot : dataSnapshot.getChildren()) {
                     User user = singleSnapshot.getValue(User.class);
-                    if(user.getIsAvailable()){
+                    if (user.getIsAvailable()) {
                         onlineUsers.add(user);
+                        users.add(user);
                     }
                 }
-                //TODO COMPLETE
-                try{
-                    ArrayList<Bitmap> onlineUsersImages = getOnlineUsersImages(onlineUsers);
-                    for(int i = 0; i < onlineUsersImages.size(); i++){
-                        Log.d("OnlineUsersActivity", "onlineUsersImages.get(i) = " + onlineUsersImages.get(i));
-
-                    }
-                }
-                catch(Exception e) {
-                    Log.e("Error", e.getMessage());
-                }
+                users = onlineUsers;
+                updateList(onlineUsers);
+                startListenerListOnlineUsers();
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.w("DATABASE", "error en la consulta", databaseError.toException());
@@ -91,22 +103,40 @@ public class OnlineUsersActivity extends AppCompatActivity {
         return onlineUsers;
     }
 
-    private ArrayList<Bitmap> getOnlineUsersImages(ArrayList<User> onlineUsers) throws IOException {
-        ArrayList<Bitmap> onlineUsersImages = new ArrayList<>();
-        for (User user : onlineUsers) {
-            String imagePath = "images/profile/" + user.getUuid() + "/image.jpg";
-            Log.i("DATABASE", "imagePath = " + imagePath);
-            try{
-                File localFile = downloadFile(imagePath);
-                Bitmap bitmap = fileToBitmap(localFile);
-                onlineUsersImages.add(bitmap);
-                Log.i("DATABASE", "Encontró imagen: " + localFile.getAbsolutePath());
+    private void updateList(ArrayList<User> onlineUsers) {
+        adapter = new OnlineUsersAdapter(OnlineUsersActivity.this, R.layout.onlineuseritem, onlineUsers);
+        listOnlineUsers.setAdapter(adapter);
+        startListenerListOnlineUsers();
+    }
+
+    private void startListenerListOnlineUsers() {
+        listOnlineUsers.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.i("LIST", "Clicked on item " + i);
+                Intent intent = new Intent(getBaseContext(), UserMap.class);
+                intent.putExtra("user", uuId);
+                intent.putExtra("userTouched", users.get(i).getUuid());
+                startActivity(intent);
+
             }
-            catch (IOException e) {
-                Log.i("DATABASE", "No se encontró imagen para el usuario: " + user.getName() + " " + user.getLastName());
-            }
+        });
+
+    }
+
+
+    private Bitmap getOnlineUserImage(User user) throws IOException {
+        Bitmap bitmap = null;
+        String imagePath = "images/profile/" + user.getUuid() + "/image.jpg";
+        Log.i("DATABASE", "imagePath = " + imagePath);
+        try {
+            File localFile = downloadFile(imagePath);
+            bitmap = fileToBitmap(localFile);
+            Log.i("DATABASE", "Encontró imagen: " + localFile.getAbsolutePath());
+        } catch (IOException e) {
+            Log.i("DATABASE", "No se encontró imagen para el usuario: " + user.getName() + " " + user.getLastName());
         }
-        return onlineUsersImages;
+        return bitmap;
     }
 
     private Bitmap fileToBitmap(File file) {
@@ -119,13 +149,13 @@ public class OnlineUsersActivity extends AppCompatActivity {
     private File downloadFile(String locationFile) throws IOException {
         File localFile = File.createTempFile("images", "jpg");
         //StorageReference imageRef = mStorageRef.child( "images/profile/" + uuId + "/image.jpg");
-        StorageReference imageRef = mStorageRef.child( locationFile);
+        StorageReference imageRef = mStorageRef.child(locationFile);
         imageRef.getFile(localFile)
                 .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    // Successfully downloaded data to local file
-                    // ...
+                        // Successfully downloaded data to local file
+                        // ...
                         Log.i("DOWNLOAD", "succesfully downloaded");
                         //UpdateUI using the localFile
                     }
@@ -139,4 +169,8 @@ public class OnlineUsersActivity extends AppCompatActivity {
         return localFile;
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
 }

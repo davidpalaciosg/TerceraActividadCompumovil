@@ -25,7 +25,7 @@
         android:layout_margin="16dp"
 
         android:backgroundTint="@color/yellow"
-        android:contentDescription="LogOut"
+        android:contentDescription="Available"
         android:src="@drawable/ic_baseline_online_prediction_24"
         />
 
@@ -37,11 +37,22 @@
         android:layout_margin="16dp"
 
         android:backgroundTint="@color/green"
-        android:contentDescription="LogOut"
+        android:contentDescription="Users"
         android:src="@drawable/ic_baseline_supervised_user_circle_24" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/btnDavidPalacios"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|center_vertical"
+        android:layout_margin="16dp"
+
+        android:backgroundTint="@color/purple_200"
+        android:contentDescription="David Palacios"
+        android:src="@drawable/ic_baseline_adb_24" />
+
     <fragment
-        android:id="@+id/map"
+        android:id="@+id/mapDavidP"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
